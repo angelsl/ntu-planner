@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="description" content="NTU Timetable Optimiser" />
+    <title>NTU Timetable Optimiser</title>
+    <link href="style.css" rel="stylesheet" />
+</head>
+<body>
+    <h1>NTU Timetable Optimiser</h1>
+    <fieldset id="optForm">
+        <legend>Options</legend>
+        <p><label for="optYear">AY</label><input type="number" id="optYear" value="2016" /><label for="optSem">Semester</label><input type="number" id="optSem" value="2" /></p>
+        <h4>Free day bonus</h4>
+        <p><input type="number" id="optFreeDayBonus" value="0" /></p>
+        <p class="help">Increase if you really value free days.</p>
+        <p class="notabene">This is added per free day. Odd weekdays and even weekdays are considered separately.</p>
+        <h4>Lunch break bonus</h4>
+        <p><input type="number" id="optLunchBonus" value="0" /></p>
+        <p class="help">Increase if you really value lunch breaks.</p>
+        <p class="notabene">This is added per day if there is a period of at least 2 slots with no lessons that falls completely between 1100 and 1400. Odd weekdays and even weekdays are considered separately.</p>
+        <h4>Slot penalties</h4>
+        <p class="help">If you don't like waking up early, you could add a penalty for the first few slots of each day. If you want each day to end earlier, you could add a penalty for the last few slots for each day. If you want to go home early on Friday, you could add a penalty for the later slots on Friday.</p>
+        <p class="notabene">These are subtracted if there is a class at the particular time, once for even weeks and once for odd weeks.</p>
+        <table id="optSlotPenaltyTbl"><thead><tr><td>Time</td><td>Mon</td><td>Tue</td><td>Wed</td><td>Thu</td><td>Fri</td></tr></thead><tbody></tbody></table>
+    </fieldset>
+    <fieldset id="modsForm">
+        <legend>Modules</legend>
+        <p><form><label for="modsCode">Module code</label><input type="text" id="modsCode" /><input type="submit" id="modsAdd" value="Add" /></form></p>
+        <ul id="modsMods"></ul>
+        <p><button id="modsCalculate">Calculate</button></p>
+    </fieldset>
+    <fieldset id="resForm">
+        <legend>Results</legend>
+        <p>The higher the score, the better.</p>
+        <p><button id="resPrev">Previous</button><select id="resChoose"></select><button id="resNext">Next</button></p>
+        <table id="resTimetable"><thead><tr><td></td><td colspan="5">Odd</td><td colspan="5">Even</td></tr><tr><td>Time</td><td>Mon</td><td>Tue</td><td>Wed</td><td>Thu</td><td>Fri</td><td>Mon</td><td>Tue</td><td>Wed</td><td>Thu</td><td>Fri</td></tr></thead><tbody></tbody></table>
+    </fieldset>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="app.js"></script>
+</body>
+</html>
