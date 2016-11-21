@@ -144,7 +144,7 @@ const modinfo = {
         }
     },
     loadFromWish: function(code, year, sem) {
-        let url = "http://query.yahooapis.com/v1/public/yql?q=" + encodeURIComponent("SELECT * FROM html WHERE url = 'http://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1?staff_access=false&acadsem=" + year + ";" + sem + "&r_subj_code=" + code +"&boption=Search&r_search_type=F'");
+        let url = "https://query.yahooapis.com/v1/public/yql?q=" + encodeURIComponent("SELECT * FROM html WHERE url = 'http://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1?staff_access=false&acadsem=" + year + ";" + sem + "&r_subj_code=" + code +"&boption=Search&r_search_type=F'");
         return $.get(url).then(function(data) {
             return parseSched($(data));
         });
