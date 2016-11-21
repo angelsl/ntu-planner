@@ -152,7 +152,7 @@ const modinfo = {
         function parseSched(data) {
             let modCode = data.find("table:eq(0) td:eq(0)").text();
             let modTitle = data.find("table:eq(0) td:eq(1)").text();
-            if (data.text().includes("No Courses found")) {
+            if (data.text().includes("No Courses found") || modCode.trim() == "" || modTitle.trim() == "") {
                 let ret = $.Deferred();
                 ret.reject("", "No such module", "");
                 return ret;
