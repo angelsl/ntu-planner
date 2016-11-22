@@ -64,7 +64,7 @@ const form = {
         $("#modli_" + code).remove();
     },
     addModInfo: function(origCode, mod) {
-        let elem = $("<li id=\"modli_" + mod.code + "\"><p><label><input type=\"checkbox\" id=\"moden_" + mod.code + "\" checked=\"checked\" /> " + mod.code + " " + mod.title + "</label></p><p></p></li>");
+        let elem = $("<li id=\"modli_" + mod.code + "\"><p><label><input type=\"checkbox\" id=\"moden_" + mod.code + "\" checked=\"checked\" /> " + mod.code + " " + mod.title + "</label> <a target=\"_blank\" href=\"http://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1?staff_access=false&acadsem=" + mod.year + ";" + mod.sem + "&r_subj_code=" + mod.code + "&boption=Search&r_search_type=F\">(See in STARS)</a></p></li>");
         let p = $("<p></p>");
         
         for (let grp of mod.groups) {
