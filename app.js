@@ -100,15 +100,55 @@ const form = {
         
         return ret2;
     },
+    addResults: function(permList) {
+        let opt = $("#resChoose");
+        opt.empty();
+        let elems = [$("<option>Choose a permutation</option>")];
+        for (let y of permList) {
+            let text = "<option>" + y.groups.map(function(g) { return g.mod + " " + g.id.toString(); }).join("; ") + " (" + y.score + ")</option>";
+            let elem = $(text);
+            elem.data("perm", y);
+            elems.push(elem);
+        }
+        opt.append(elems);
+    },
+    clearTimetable: function() {
+        $("#resTimetable tbody td:not(:first-child)").empty();
+    },
+    showPermutation: function(perm) {
+        this.clearTimetable();
+        if (!perm) {
+            return;
+        }
+        for (let g of perm.groups) {
+            for (let c of g.classes) {
+                for (let s = 0; s < c.numSlots; s++) {
+                    let text = "<p>" + g.mod + " " + g.id + "</p><p>" + c.type + "</p>";
+                    if (c.odd) {
+                        this.getResultSlot(0, c.day, c.firstSlot + s).append(text);
+                    }
+                    
+                    if (c.even) {
+                        this.getResultSlot(1, c.day, c.firstSlot + s).append(text);
+                    }
+                }
+            }
+        }
+    },
     init: function() {
         for (let i = 0; i < slots.length; ++i) {
             $("#optSlotPenaltyTbl tbody").append(
                 "<tr><td>" + slots[i] + "</td>" +
-                "<td><input type=\"number\" id=\"pen0_" + i + "\" value=\"0\" /></td>" +
-                "<td><input type=\"number\" id=\"pen1_" + i + "\" value=\"0\" /></td>" +
-                "<td><input type=\"number\" id=\"pen2_" + i + "\" value=\"0\" /></td>" + 
-                "<td><input type=\"number\" id=\"pen3_" + i + "\" value=\"0\" /></td>" +
-                "<td><input type=\"number\" id=\"pen4_" + i + "\" value=\"0\" /></td></tr>");
+                "<td><input type=\"number\" id=\"pen0_" + i + "\" /></td>" +
+                "<td><input type=\"number\" id=\"pen1_" + i + "\" /></td>" +
+                "<td><input type=\"number\" id=\"pen2_" + i + "\" /></td>" + 
+                "<td><input type=\"number\" id=\"pen3_" + i + "\" /></td>" +
+                "<td><input type=\"number\" id=\"pen4_" + i + "\" /></td></tr>");
+            
+            for (let j = 0; j < 5; j++) {
+                restore("pen" + j + "_" + i);
+            }
+            
             $("#resTimetable tbody").append(
                 "<tr><td>" + slots[i] + "</td>" +
                 "<td id=\"res00_" + i + "\"></td>" +
@@ -121,6 +161,32 @@ const form = {
                 "<td id=\"res12_" + i + "\"></td>" + 
                 "<td id=\"res13_" + i + "\"></td>" +
                 "<td id=\"res14_" + i + "\"></td></tr>");
+        }
+
+        restore("optYear", "2016");
+        restore("optSem", "2");
+        restore("optFreeDayBonus");
+        restore("optLunchBonus");
+        
+        $("#optYear").change(persist);
+        $("#optSem").change(persist);
+        $("#optFreeDayBonus").change(persist);
+        $("#optLunchBonus").change(persist);
+        $("#optSlotPenaltyTbl input").change(persist);
+        
+        $('input[type="number"]').on('focus', function(e) {
+            $(this).one('mouseup', function() {
+                $(this).select();
+                return false;
+            }).select();
+        });
+        
+        function persist(e) {
+            localStorage.setItem(e.target.id, $(e.target).val());
+        }
+        
+        function restore(id, def) {
+            $("#" + id).val(localStorage.getItem(id) || def || "0");
         }
     },
     reset: function() {
@@ -258,6 +324,9 @@ function Class(day, odd, even, firstSlot, numSlots, type) {
 function init() {
     $("#modsAdd").click(clickAddMod);
     $("#modsCalculate").click(clickCalc);
+    $("#resChoose").change(showResult);
+    $("#resPrev").click(clickResPrev);
+    $("#resNext").click(clickResNext);
     form.init();
 }
 
@@ -279,8 +348,26 @@ function clickAddMod() {
 }
 
 function clickCalc() {
+    form.clearTimetable();
     let result = calc(form.getEnabledModGroups());
-    console.log(result);
+    form.addResults(result);
+}
+
+function showResult(e) {
+    let perm = $("#resChoose").find("option:selected").data("perm");
+    form.showPermutation(perm);
+}
+
+function clickResPrev() {
+    let e = $("#resChoose");
+    e.prop("selectedIndex", Math.max(0, e.prop("selectedIndex") - 1));
+    e.change();
+}
+
+function clickResNext() {
+    let e = $("#resChoose");
+    e.prop("selectedIndex", Math.min(e.children().length - 1, e.prop("selectedIndex") + 1));
+    e.change();
 }
 
 function calc(mg) {

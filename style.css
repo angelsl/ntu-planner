@@ -3,3 +3,113 @@ body {
     width: 90%;
     margin: 0 auto;
 }
+
+p {
+  margin: 4pt 0;
+}
+
+h4 {
+  margin-bottom: 4pt;
+}
+
+.notabene {
+  font-size: x-small;
+}
+
+fieldset {
+  border: 1pt solid black;
+  border-radius: 5pt;
+}
+
+legend {
+  font-weight: bold;
+  font-variant: small-caps;
+}
+
+fieldset + fieldset {
+  margin-top: 1em;
+}
+
+label + input {
+  margin-left: 6pt;
+}
+
+input + label {
+  margin-left: 6pt;
+}
+
+#modsCode {
+  width: 70%;
+}
+
+#modsMods {
+  padding: 0;
+}
+
+#modsMods li {
+  list-style-type: none;
+  border: 1pt solid black;
+  border-radius: 5pt;
+}
+
+#modsMods li + li {
+  margin-top: .5em;
+}
+
+#resChoose {
+  width: 80%;
+}
+
+#optSlotPenaltyTbl {
+  text-align: center;
+}
+
+#optSlotPenaltyTbl td {
+  padding: 2pt;
+}
+
+#optSlotPenaltyTbl input {
+  width: 5em;
+}
+
+#resTimetable {
+  border-collapse: collapse;
+  text-align: center;
+  table-layout: fixed;
+}
+
+#resTimetable thead, #optSlotPenaltyTbl thead {
+  font-weight: bold;
+}
+
+#resTimetable thead tr:nth-child(2) td {
+  width: 7em;
+}
+
+#resTimetable tbody td:first-child, #optSlotPenaltyTbl tbody td:first-child {
+  font-weight: bold;
+}
+
+#resTimetable tbody td:not(:first-child) {
+  font-size: small;
+}
+
+#resTimetable tbody tr {
+  height: 4em;
+}
+
+#resTimetable tbody td:not(:empty):not(:first-child) {
+  background-color: orange;
+}
+
+#resTimetable td {
+  border: 1pt solid black;
+}
+
+#resTimetable td.cont {
+  border-bottom: none;
+}
+
+#resTimetable p {
+  margin: 0;
+}
