@@ -103,7 +103,7 @@ const form = {
     addResults: function(permList) {
         let opt = $("#resChoose");
         opt.empty();
-        let elems = [$("<option>Choose a permutation</option>")];
+        let elems = [];
         for (let y of permList) {
             let text = "<option>" + y.groups.map(function(g) { return g.mod + " " + g.id.toString(); }).join("; ") + " (" + y.score + ")</option>";
             let elem = $(text);
@@ -359,6 +359,7 @@ function clickCalc() {
     form.clearTimetable();
     let result = calc(form.getEnabledModGroups());
     form.addResults(result);
+    $("#resChoose").change();
 }
 
 function showResult(e) {
