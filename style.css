@@ -52,6 +52,14 @@ input + label {
   border-radius: 5pt;
 }
 
+#modsMods li p:first-child {
+  font-weight: bold;
+}
+
+#modsMods li p:not(:first-child) {
+  margin-left: 1em;
+}
+
 #modsMods li + li {
   margin-top: .5em;
 }
