@@ -135,6 +135,10 @@ input#optYear + label {
   background-color: #666;
 }
 
+.score {
+  font-size: x-small;
+}
+
 #resTimetable tbody td:not(:first-child) p:first-child {
   font-weight: bold;
 }
