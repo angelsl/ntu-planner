@@ -184,7 +184,7 @@ const form = {
                 }
                 let text = "<p>" + g.mod + " " + g.id + "</p><p>" + c.type + "</p>";
                 if (pen != 0) {
-                    text += "<p>Score: " + pen + "</p>";
+                    text += "<p class=\"notabene\">" + pen + "</p>";
                 }
                 addClass(c.odd, c.even, c.day, c.firstSlot, c.numSlots, text, "ttClass");
             }
@@ -197,7 +197,7 @@ const form = {
                 }
                 let text = "<p>" + p.type + "</p>";
                 if (p.value != 0) {
-                    text += "<p>Score: " + p.value + "</p>";
+                    text += "<p class=\"notabene\">" + p.value + "</p>";
                 }
                 let day = Math.floor(i/nSlots);
                 let elemClass = false;
@@ -437,7 +437,7 @@ function init() {
     const CONFIG_VER = 7;
     let ver = parseInt(cfg.getItem("initialised"), 10);
     if (!cfg.getItem("initialised") || isNaN(ver) || ver < CONFIG_VER) {
-        let defaults = {"pen4_18":"80","pen4_13":"80","pen3_27":"80","pen0_3":"40","pen4_29":"80","pen2_20":"80","pen4_9":"80","pen0_26":"80","pen3_23":"80","pen1_2":"40","pen2_2":"40","pen4_12":"80","pen1_24":"80","pen3_20":"80","pen3_1":"40","pen4_26":"80","pen2_28":"80","pen2_21":"80","pen0_25":"80","pen1_1":"40","pen4_15":"80","pen1_25":"80","pen3_28":"80","pen4_27":"80","pen2_29":"80","pen2_22":"80","pen1_26":"80","pen0_24":"80","pen1_0":"40","pen4_14":"80","pen3_0":"40","pen3_29":"80","pen3_22":"80","pen4_24":"80","pen2_0":"40","pen3_21":"80","pen2_23":"80","pen4_17":"80","pen1_27":"80","pen4_25":"80","pen0_23":"80","pen0_22":"80","pen4_16":"80","pen1_20":"80","pen0_28":"80","pen2_25":"80","pen4_22":"80","pen2_24":"80","pen4_21":"80","pen4_2":"0","pen1_28":"80","pen1_21":"80","pen3_24":"80","pen0_0":"40","pen4_23":"80","pen3_3":"40","pen0_21":"80","pen2_1":"40","pen4_11":"80","pen1_29":"80","pen1_22":"80","pen3_25":"80","pen0_1":"40","pen4_20":"80","pen2_26":"80","pen0_29":"80","pen0_20":"80","pen4_0":"40","pen4_19":"80","pen4_10":"80","pen0_27":"80","pen1_23":"80","pen3_26":"80","pen0_2":"40","pen4_28":"80","pen3_2":"40","pen2_27":"80","pen4_8":"80","pen4_1":"40","pen1_3":"40","pen2_3":"40","optYear":"2016","optSem":"2","optLunchSlots":"2","optLunchStart":"5","optLunchEnd":"10","optFreeDayBonus":"5000","optLunchBonus":"160"};
+        let defaults = {"pen4_18":"20","pen4_13":"20","pen3_27":"2","pen0_3":"1","pen4_29":"20","pen2_20":"2","pen4_9":"20","pen0_26":"2","pen3_23":"2","pen1_2":"1","pen2_2":"1","pen4_12":"20","pen1_24":"2","pen3_20":"2","pen3_1":"20","pen4_26":"20","pen2_28":"2","pen2_21":"2","pen0_25":"2","pen1_1":"20","pen4_15":"20","pen1_25":"2","pen3_28":"2","pen4_27":"20","pen2_29":"2","pen2_22":"2","pen1_26":"2","pen0_24":"2","pen1_0":"20","pen4_14":"20","pen3_0":"20","pen3_29":"2","pen3_22":"2","pen4_24":"20","pen2_0":"20","pen3_21":"2","pen2_23":"2","pen4_17":"20","pen1_27":"2","pen4_25":"20","pen0_23":"2","pen0_22":"2","pen4_16":"20","pen1_20":"2","pen0_28":"2","pen2_25":"2","pen4_22":"20","pen2_24":"2","pen4_21":"20","pen4_2":"0","pen1_28":"2","pen1_21":"2","pen3_24":"2","pen0_0":"20","pen4_23":"20","pen3_3":"1","pen0_21":"2","pen2_1":"20","pen4_11":"20","pen1_29":"2","pen1_22":"2","pen3_25":"2","pen0_1":"20","pen4_20":"20","pen2_26":"2","pen0_29":"2","pen0_20":"2","pen4_0":"20","pen4_19":"20","pen4_10":"20","pen0_27":"2","pen1_23":"2","pen3_26":"2","pen0_2":"1","pen4_28":"20","pen3_2":"1","pen2_27":"2","pen4_8":"20","pen4_1":"20","pen1_3":"1","pen2_3":"1","optYear":"2016","optSem":"2","optLunchSlots":"2","optLunchStart":"5","optLunchEnd":"10","optFreeDayBonus":"500","optLunchBonus":"20"};
         for (let k in defaults) {
             if (cfg.getItem(k) === null) {
                 cfg.setItem(k, defaults[k]);
