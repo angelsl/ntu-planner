@@ -385,12 +385,15 @@ function Class(day, odd, even, firstSlot, numSlots, type) {
 }
 
 function init() {
-    if (!localStorage.initialised) {
+    const CONFIG_VER = 7;
+    if (!localStorage.initialised || localStorage.initialised < CONFIG_VER) {
         let defaults = {"pen4_18":"80","pen4_13":"80","pen3_27":"80","pen0_3":"40","pen4_29":"80","pen2_20":"80","pen4_9":"80","pen0_26":"80","pen3_23":"80","pen1_2":"40","pen2_2":"40","pen4_12":"80","pen1_24":"80","pen3_20":"80","pen3_1":"40","pen4_26":"80","pen2_28":"80","pen2_21":"80","pen0_25":"80","pen1_1":"40","pen4_15":"80","pen1_25":"80","pen3_28":"80","pen4_27":"80","pen2_29":"80","pen2_22":"80","pen1_26":"80","pen0_24":"80","pen1_0":"40","pen4_14":"80","pen3_0":"40","pen3_29":"80","pen3_22":"80","pen4_24":"80","pen2_0":"40","pen3_21":"80","pen2_23":"80","pen4_17":"80","pen1_27":"80","optFreeDayBonus":"5000","pen4_25":"80","pen0_23":"80","pen0_22":"80","pen4_16":"80","pen1_20":"80","pen0_28":"80","pen2_25":"80","pen4_22":"80","pen2_24":"80","pen4_21":"80","pen4_2":"0","pen1_28":"80","pen1_21":"80","pen3_24":"80","pen0_0":"40","pen4_23":"80","pen3_3":"40","pen0_21":"80","pen2_1":"40","pen4_11":"80","pen1_29":"80","pen1_22":"80","pen3_25":"80","pen0_1":"40","pen4_20":"80","pen2_26":"80","pen0_29":"80","pen0_20":"80","pen4_0":"40","pen4_19":"80","pen4_10":"80","pen0_27":"80","pen1_23":"80","pen3_26":"80","pen0_2":"40","pen4_28":"80","pen3_2":"40","pen2_27":"80","pen4_8":"80","pen4_1":"40","pen1_3":"40","pen2_3":"40","optYear":"2016","optSem":"2","optLunchSlots":"2","optLunchStart":"5","optLunchEnd":"10"};
         for (let k in defaults) {
-            localStorage.setItem(k, defaults[k]);
+            if (localStorage.getItem(k) === undefined) {
+                localStorage.setItem(k, defaults[k]);
+            }
         }
-        localStorage.initialised = true;
+        localStorage.initialised = CONFIG_VER;
     }
 
     $("#modsAdd").click(clickAddMod);
