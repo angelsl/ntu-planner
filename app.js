@@ -422,28 +422,39 @@ function init() {
     form.init();
 }
 
-function clickAddMod() {
+function processAddMod() {
     let codes = form.getAddModCode().split(";");
     let yr = form.getYear();
     let sem = form.getSem();
+    let promises = [];
     for (let coder of codes) {
         let code = coder; // closure cannot close over coder
         // otherwise form.addModInfo gets the last value of coder
         code = code.trim();
         form.addModPlaceholder(code);
-        modinfo.getModule(code, yr, sem).done(function(mod) {
+        promises.push(modinfo.getModule(code, yr, sem).done(function(mod) {
             form.addModInfo(code, mod);
         }).fail(function(_, e1, e2) {
             alert("Error loading module (check browser console?) " + code + ": " + e1 + " " + e2);
             form.removeMod(code);
-        });
+        }));
     }
+    return promises;
+}
+
+function clickAddMod() {
+    processAddMod();
     return false;
 }
 
 function clickCalc() {
     form.clearTimetable();
-    let result = calc(form.getEnabledModGroups());
+    let mg = form.getEnabledModGroups();
+    if (mg.length == 0 && form.getAddModCode().trim().length > 0) {
+        $.when.apply($, processAddMod()).done(clickCalc);
+        return;
+    }
+    let result = calc(mg);
     form.addResults(result);
     $("#resChoose").change();
 }
