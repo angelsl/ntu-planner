@@ -489,6 +489,10 @@ function clickCalc() {
         return;
     }
     let result = calc(mg);
+    if (result.length == 0) {
+        alert("No possible combinations found. Please check if any of your modules are online only; this tool cannot detect that.");
+        return;
+    }
     form.addResults(result);
     $("#resChoose").change();
 }
