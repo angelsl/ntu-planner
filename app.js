@@ -1,4 +1,38 @@
 (function() {
+const cfg = {
+    cfg: false,
+    setItem: function(key, val) {
+        this.init();
+        this.cfg[key] = val;
+        localStorage.ntuplanner = JSON.stringify(this.cfg);
+    },
+    getItem: function(key) {
+        this.init();
+
+        if (!(key in this.cfg)) {
+            return null;
+        }
+
+        return this.cfg[key];
+    },
+    exportJson: function() {
+        return JSON.stringify(this.cfg);
+    },
+    importJson: function(json) {
+        this.cfg = JSON.parse(json);
+        localStorage.ntuplanner = json;
+    },
+    init: function() {
+        if (!(this.cfg instanceof Object)) {
+            this.cfg = JSON.parse(localStorage.ntuplanner || "{}");
+        }
+
+        if (!(this.cfg instanceof Object)) {
+            this.cfg = {};
+        }
+    }
+};
+
 const slots = (function() {
     // zero pad left
     function zpl(num) {
@@ -254,11 +288,11 @@ const form = {
         });
 
         function persist(e) {
-            localStorage.setItem(e.target.id, $(e.target).val());
+            cfg.setItem(e.target.id, $(e.target).val());
         }
 
         function restore(id, def) {
-            $("#" + id).val(localStorage.getItem(id) || def || "0");
+            $("#" + id).val(cfg.getItem(id) || def || "0");
         }
     },
     reset: function() {
@@ -401,15 +435,15 @@ function Class(day, odd, even, firstSlot, numSlots, type) {
 
 function init() {
     const CONFIG_VER = 7;
-    let ver = parseInt(localStorage.initialised, 10);
-    if (!localStorage.initialised || isNaN(ver) || ver < CONFIG_VER) {
+    let ver = parseInt(cfg.getItem("initialised"), 10);
+    if (!cfg.getItem("initialised") || isNaN(ver) || ver < CONFIG_VER) {
         let defaults = {"pen4_18":"80","pen4_13":"80","pen3_27":"80","pen0_3":"40","pen4_29":"80","pen2_20":"80","pen4_9":"80","pen0_26":"80","pen3_23":"80","pen1_2":"40","pen2_2":"40","pen4_12":"80","pen1_24":"80","pen3_20":"80","pen3_1":"40","pen4_26":"80","pen2_28":"80","pen2_21":"80","pen0_25":"80","pen1_1":"40","pen4_15":"80","pen1_25":"80","pen3_28":"80","pen4_27":"80","pen2_29":"80","pen2_22":"80","pen1_26":"80","pen0_24":"80","pen1_0":"40","pen4_14":"80","pen3_0":"40","pen3_29":"80","pen3_22":"80","pen4_24":"80","pen2_0":"40","pen3_21":"80","pen2_23":"80","pen4_17":"80","pen1_27":"80","pen4_25":"80","pen0_23":"80","pen0_22":"80","pen4_16":"80","pen1_20":"80","pen0_28":"80","pen2_25":"80","pen4_22":"80","pen2_24":"80","pen4_21":"80","pen4_2":"0","pen1_28":"80","pen1_21":"80","pen3_24":"80","pen0_0":"40","pen4_23":"80","pen3_3":"40","pen0_21":"80","pen2_1":"40","pen4_11":"80","pen1_29":"80","pen1_22":"80","pen3_25":"80","pen0_1":"40","pen4_20":"80","pen2_26":"80","pen0_29":"80","pen0_20":"80","pen4_0":"40","pen4_19":"80","pen4_10":"80","pen0_27":"80","pen1_23":"80","pen3_26":"80","pen0_2":"40","pen4_28":"80","pen3_2":"40","pen2_27":"80","pen4_8":"80","pen4_1":"40","pen1_3":"40","pen2_3":"40","optYear":"2016","optSem":"2","optLunchSlots":"2","optLunchStart":"5","optLunchEnd":"10","optFreeDayBonus":"5000","optLunchBonus":"160"};
         for (let k in defaults) {
-            if (localStorage.getItem(k) === null) {
-                localStorage.setItem(k, defaults[k]);
+            if (cfg.getItem(k) === null) {
+                cfg.setItem(k, defaults[k]);
             }
         }
-        localStorage.initialised = CONFIG_VER;
+        cfg.setItem("initialised", CONFIG_VER);
     }
 
     $("#modsAdd").click(clickAddMod);
@@ -477,7 +511,7 @@ function clickResNext() {
 }
 
 function clickExport() {
-    window.prompt("Copy and share the settings.", JSON.stringify(localStorage));
+    window.prompt("Copy and share the settings.", cfg.exportJson());
 }
 
 function clickImport() {
@@ -485,11 +519,7 @@ function clickImport() {
     if (!json) {
         return;
     }
-    let obj = JSON.parse(json);
-    localStorage.clear();
-    for (let k in obj) {
-        localStorage.setItem(k, obj[k]);
-    }
+    let obj = cfg.importJson(json);
     location.reload();
 }
 
