@@ -591,6 +591,7 @@ function calc(mg) {
             if (!haveClass) {
                 r += pen.free;
                 p[d*nSlots].push({type: "Free Day", value: pen.free, num: nSlots});
+                continue; // free day overrides lunch
             }
 
             let lunchStart = form.getLunchStart();
