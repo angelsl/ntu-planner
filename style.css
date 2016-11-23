@@ -68,6 +68,11 @@ input + label {
   margin-top: .5em;
 }
 
+#modsMods li > p > span {
+  float: right;
+  margin-right: .25em;
+}
+
 #resChoose {
   width: 80%;
 }

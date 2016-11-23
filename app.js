@@ -73,8 +73,8 @@ const form = {
         $("#modli_" + code).remove();
     },
     addModInfo: function(origCode, mod) {
-        let elem = $("<li id=\"modli_" + mod.code + "\"><p><label><input type=\"checkbox\" id=\"moden_" + mod.code + "\" checked=\"checked\" /> " + mod.code + " " + mod.title + "</label> <a target=\"_blank\" href=\"http://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1?staff_access=false&acadsem=" + mod.year + ";" + mod.sem + "&r_subj_code=" + mod.code + "&boption=Search&r_search_type=F\">(See in STARS)</a></p></li>");
-        let p = $("<p></p>");
+        let elem = $("<li id=\"modli_" + mod.code + "\"><p><label><input type=\"checkbox\" id=\"moden_" + mod.code + "\" checked=\"checked\" /> " + mod.code + " " + mod.title + "</label> <a target=\"_blank\" href=\"http://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1?staff_access=false&acadsem=" + mod.year + ";" + mod.sem + "&r_subj_code=" + mod.code + "&boption=Search&r_search_type=F\">(See in STARS)</a><span><button id=\"enall_" + mod.code + "\">Enable all</button><button id=\"disall_" + mod.code + "\">Disable all</button><button id=\"remove_" + mod.code + "\">Remove</button></span></p></li>");
+        let p = $("<p id=\"modgrps_" + mod.code + "\"></p>");
 
         for (let grp of mod.groups) {
             let g = $("<label><input type=\"checkbox\" id=\"grpen_" + grp.id + "\" checked=\"checked\" /> " + grp.id + "</label>");
@@ -84,6 +84,15 @@ const form = {
         }
         elem.append(p);
         elem.data("module", mod);
+        elem.find("#enall_" + mod.code).click(function() {
+            elem.find("#modgrps_" + mod.code + ' input[type="checkbox"]').prop('checked', true);
+        });
+        elem.find("#disall_" + mod.code).click(function() {
+            elem.find("#modgrps_" + mod.code + ' input[type="checkbox"]').prop('checked', false);
+        });
+        elem.find("#remove_" + mod.code).click(function() {
+            elem.remove();
+        });
         if (origCode != mod.code) {
             $("#modli_" + mod.code).remove();
         }
