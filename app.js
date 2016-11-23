@@ -284,7 +284,13 @@ const modinfo = {
     loadFromWish: function(code, year, sem) {
         let url = "https://query.yahooapis.com/v1/public/yql?q=" + encodeURIComponent("SELECT * FROM html WHERE url = 'http://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1?staff_access=false&acadsem=" + year + ";" + sem + "&r_subj_code=" + code +"&boption=Search&r_search_type=F'");
         return $.get(url).then(function(data) {
-            return parseSched($(data));
+            try {
+                return parseSched($(data));
+            } catch (e) {
+                let ret = $.Deferred();
+                ret.reject("", e.toString(), "");
+                return ret;
+            }
         });
 
         function parseSched(data) {
@@ -411,6 +417,8 @@ function init() {
     $("#resChoose").change(showResult);
     $("#resPrev").click(clickResPrev);
     $("#resNext").click(clickResNext);
+    $("#optExport").click(clickExport);
+    $("#optImport").click(clickImport);
     form.init();
 }
 
@@ -455,6 +463,23 @@ function clickResNext() {
     let e = $("#resChoose");
     e.prop("selectedIndex", Math.min(e.children().length - 1, e.prop("selectedIndex") + 1));
     e.change();
+}
+
+function clickExport() {
+    window.prompt("Copy and share the settings.", JSON.stringify(localStorage));
+}
+
+function clickImport() {
+    let json = window.prompt("Paste the settings.");
+    if (!json) {
+        return;
+    }
+    let obj = JSON.parse(json);
+    localStorage.clear();
+    for (let k in obj) {
+        localStorage.setItem(k, obj[k]);
+    }
+    location.reload();
 }
 
 function calc(mg) {
