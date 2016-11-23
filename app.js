@@ -53,6 +53,15 @@ const form = {
     getAddModCode: function() {
         return $("#modsCode").val();
     },
+    getLunchStart: function() {
+        return parseInt($("#optLunchStart").val(), 10);
+    },
+    getLunchEnd: function() {
+        return parseInt($("#optLunchEnd").val(), 10);
+    },
+    getLunchSlots: function() {
+        return parseInt($("#optLunchSlots").val(), 10);
+    },
     addModPlaceholder: function(code) {
         if ($("#modli_" + code).length > 0) {
             return;
@@ -211,18 +220,22 @@ const form = {
                 "<td id=\"res12_" + i + "\"></td>" +
                 "<td id=\"res13_" + i + "\"></td>" +
                 "<td id=\"res14_" + i + "\"></td></tr>");
+
+            $("#optLunchStart, #optLunchEnd").append(
+                "<option value=\"" + i + "\">" + slots[i] + "</option>"
+            );
         }
 
-        restore("optYear", "2016");
-        restore("optSem", "2");
-        restore("optFreeDayBonus");
-        restore("optLunchBonus");
-
-        $("#optYear").change(persist);
-        $("#optSem").change(persist);
-        $("#optFreeDayBonus").change(persist);
-        $("#optLunchBonus").change(persist);
         $("#optSlotPenaltyTbl input").change(persist);
+
+        for (let id of
+            ["optYear", "optSem", "optFreeDayBonus",
+            "optLunchBonus", "optLunchStart",
+            "optLunchEnd", "optLunchSlots"]
+        ) {
+            restore(id);
+            $("#" + id).change(persist);
+        }
 
         $('input[type="number"]').on('focus', function(e) {
             $(this).one('mouseup', function() {
@@ -373,7 +386,7 @@ function Class(day, odd, even, firstSlot, numSlots, type) {
 
 function init() {
     if (!localStorage.initialised) {
-        let defaults = {"pen4_18":"80","pen4_13":"80","pen3_27":"80","pen0_3":"40","pen4_29":"80","pen2_20":"80","pen4_9":"80","pen0_26":"80","pen3_23":"80","pen1_2":"40","pen2_2":"40","pen4_12":"80","pen1_24":"80","pen3_20":"80","pen3_1":"40","pen4_26":"80","pen2_28":"80","pen2_21":"80","pen0_25":"80","pen1_1":"40","pen4_15":"80","pen1_25":"80","pen3_28":"80","pen4_27":"80","pen2_29":"80","pen2_22":"80","pen1_26":"80","pen0_24":"80","pen1_0":"40","pen4_14":"80","pen3_0":"40","pen3_29":"80","pen3_22":"80","pen4_24":"80","pen2_0":"40","pen3_21":"80","pen2_23":"80","pen4_17":"80","pen1_27":"80","optFreeDayBonus":"5000","pen4_25":"80","pen0_23":"80","pen0_22":"80","pen4_16":"80","pen1_20":"80","pen0_28":"80","pen2_25":"80","pen4_22":"80","pen2_24":"80","pen4_21":"80","pen4_2":"0","pen1_28":"80","pen1_21":"80","pen3_24":"80","pen0_0":"40","pen4_23":"80","pen3_3":"40","pen0_21":"80","pen2_1":"40","pen4_11":"80","pen1_29":"80","pen1_22":"80","pen3_25":"80","pen0_1":"40","pen4_20":"80","pen2_26":"80","pen0_29":"80","pen0_20":"80","pen4_0":"40","pen4_19":"80","pen4_10":"80","pen0_27":"80","pen1_23":"80","pen3_26":"80","pen0_2":"40","pen4_28":"80","pen3_2":"40","pen2_27":"80","pen4_8":"80","pen4_1":"40","pen1_3":"40","pen2_3":"40"};
+        let defaults = {"pen4_18":"80","pen4_13":"80","pen3_27":"80","pen0_3":"40","pen4_29":"80","pen2_20":"80","pen4_9":"80","pen0_26":"80","pen3_23":"80","pen1_2":"40","pen2_2":"40","pen4_12":"80","pen1_24":"80","pen3_20":"80","pen3_1":"40","pen4_26":"80","pen2_28":"80","pen2_21":"80","pen0_25":"80","pen1_1":"40","pen4_15":"80","pen1_25":"80","pen3_28":"80","pen4_27":"80","pen2_29":"80","pen2_22":"80","pen1_26":"80","pen0_24":"80","pen1_0":"40","pen4_14":"80","pen3_0":"40","pen3_29":"80","pen3_22":"80","pen4_24":"80","pen2_0":"40","pen3_21":"80","pen2_23":"80","pen4_17":"80","pen1_27":"80","optFreeDayBonus":"5000","pen4_25":"80","pen0_23":"80","pen0_22":"80","pen4_16":"80","pen1_20":"80","pen0_28":"80","pen2_25":"80","pen4_22":"80","pen2_24":"80","pen4_21":"80","pen4_2":"0","pen1_28":"80","pen1_21":"80","pen3_24":"80","pen0_0":"40","pen4_23":"80","pen3_3":"40","pen0_21":"80","pen2_1":"40","pen4_11":"80","pen1_29":"80","pen1_22":"80","pen3_25":"80","pen0_1":"40","pen4_20":"80","pen2_26":"80","pen0_29":"80","pen0_20":"80","pen4_0":"40","pen4_19":"80","pen4_10":"80","pen0_27":"80","pen1_23":"80","pen3_26":"80","pen0_2":"40","pen4_28":"80","pen3_2":"40","pen2_27":"80","pen4_8":"80","pen4_1":"40","pen1_3":"40","pen2_3":"40","optYear":"2016","optSem":"2","optLunchSlots":"2","optLunchStart":"5","optLunchEnd":"10"};
         for (let k in defaults) {
             localStorage.setItem(k, defaults[k]);
         }
@@ -498,12 +511,16 @@ function calc(mg) {
                 p[d*nSlots].push({type: "Free Day", value: pen.free, num: nSlots});
             }
 
-            let lunchFrom = 5;
+            let lunchStart = form.getLunchStart();
+            let lunchEnd = form.getLunchEnd();
+            let lunchSlots = form.getLunchSlots();
+            let lunchFrom = lunchStart;
             let streak = 0;
-            for (let s = 5; s < 11; s++) {
+            let streaks = [];
+            for (let s = lunchStart; s <= lunchEnd; s++) {
                 if (t.slots[d*nSlots + s]) {
-                    if (streak >= 2) {
-                        break;
+                    if (streak >= lunchSlots) {
+                        streaks.push({start: lunchFrom, n: streak});
                     }
                     lunchFrom = s+1;
                     streak = 0;
@@ -512,9 +529,19 @@ function calc(mg) {
                 }
             }
 
-            if (streak >= 2) {
+            if (streak >= lunchSlots) {
+                streaks.push({start: lunchFrom, n: streak});
+            }
+
+            if (streaks.length > 0) {
                 r += pen.lunch;
-                p[d*nSlots + lunchFrom].push({type: "Lunch", value: pen.lunch, num: streak});
+                let lunch = {n: 0, start: 0};
+                for (let streak of streaks) {
+                    if (streak.n > lunch.n) {
+                        lunch = streak;
+                    }
+                }
+                p[d*nSlots + lunch.start].push({type: "Lunch", value: pen.lunch, num: lunch.n});
             }
         }
         return {score: r, penalties: p};
