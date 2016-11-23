@@ -594,8 +594,8 @@ function calc(mg) {
             }
 
             let lunchStart = form.getLunchStart();
-            let lunchEnd = form.getLunchEnd();
-            let lunchSlots = form.getLunchSlots();
+            let lunchEnd = Math.max(form.getLunchEnd(), lunchStart);
+            let lunchSlots = Math.max(form.getLunchSlots(), 1);
             let lunchFrom = lunchStart;
             let streak = 0;
             let streaks = [];
