@@ -107,7 +107,7 @@ input + label {
 }
 
 #resTimetable tbody tr {
-  height: 4em;
+  height: 2em;
 }
 
 #resTimetable td {
@@ -127,8 +127,7 @@ input + label {
 }
 
 #resTimetable tbody td.ttLunch {
-  color: white;
-  background-color: green;
+  color: navy;
 }
 
 #resTimetable tbody td.ttFreeDay {
