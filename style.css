@@ -90,7 +90,6 @@ input#optYear + label {
 }
 
 #resTimetable {
-  border-collapse: collapse;
   text-align: center;
   table-layout: fixed;
 }
