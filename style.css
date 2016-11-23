@@ -119,10 +119,6 @@ input#optYear + label {
   border: 1pt solid black;
 }
 
-#resTimetable td.cont {
-  border-bottom: none;
-}
-
 #resTimetable p {
   margin: 0;
 }
