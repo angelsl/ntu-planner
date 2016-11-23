@@ -4,13 +4,13 @@ const slots = (function() {
     function zpl(num) {
         return (num < 10 ? "0" : "") + num;
     }
-    
+
     let ret = [];
     for (let t = 8; t < 23; t++) {
         ret.push(zpl(t) + "30 - " + zpl(t+1) + "00");
         ret.push(zpl(t+1) + "00 - " + zpl(t+1) + "30");
     }
-    
+
     return ret;
 })();
 
@@ -66,7 +66,7 @@ const form = {
     addModInfo: function(origCode, mod) {
         let elem = $("<li id=\"modli_" + mod.code + "\"><p><label><input type=\"checkbox\" id=\"moden_" + mod.code + "\" checked=\"checked\" /> " + mod.code + " " + mod.title + "</label> <a target=\"_blank\" href=\"http://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1?staff_access=false&acadsem=" + mod.year + ";" + mod.sem + "&r_subj_code=" + mod.code + "&boption=Search&r_search_type=F\">(See in STARS)</a></p></li>");
         let p = $("<p></p>");
-        
+
         for (let grp of mod.groups) {
             let g = $("<label><input type=\"checkbox\" id=\"grpen_" + grp.id + "\" checked=\"checked\" /> " + grp.id + "</label>");
             g.data("module", mod);
@@ -90,14 +90,14 @@ const form = {
             }
             ret1[modCode].push(grp.data("group"));
         }
-        
+
         let ret2 = [];
         for (let mod in ret1) {
             if ($("#moden_" + mod).prop("checked")) {
                 ret2.push(ret1[mod]);
             }
         }
-        
+
         return ret2;
     },
     addResults: function(permList) {
@@ -113,7 +113,7 @@ const form = {
         opt.append(elems);
     },
     clearTimetable: function() {
-        $("#resTimetable tbody td:not(:first-child)").empty();
+        $("#resTimetable tbody td:not(:first-child)").removeClass().removeAttr("rowspan").empty();
     },
     showPermutation: function(perm) {
         this.clearTimetable();
@@ -122,16 +122,66 @@ const form = {
         }
         for (let g of perm.groups) {
             for (let c of g.classes) {
+                let pen = 0;
                 for (let s = 0; s < c.numSlots; s++) {
-                    let text = "<p>" + g.mod + " " + g.id + "</p><p>" + c.type + "</p>";
-                    if (c.odd) {
-                        this.getResultSlot(0, c.day, c.firstSlot + s).append(text);
-                    }
-                    
-                    if (c.even) {
-                        this.getResultSlot(1, c.day, c.firstSlot + s).append(text);
+                    for (let p of perm.penalties[((c.even ? 5 : 0) + c.day)*nSlots + c.firstSlot + s]) { // TODO fixme ugly
+                        if (p.type == "Slot Penalty") {
+                            pen += p.value;
+                        }
                     }
                 }
+                let text = "<p>" + g.mod + " " + g.id + "</p><p>" + c.type + "</p>";
+                if (pen != 0) {
+                    text += "<p>Score: " + pen + "</p>";
+                }
+                addClass(c.odd, c.even, c.day, c.firstSlot, c.numSlots, text, "ttClass");
+            }
+        }
+        for (let i = 0; i < perm.penalties.length; i++) {
+            let s = perm.penalties[i];
+            for (let p of s) {
+                if (p.type == "Slot Penalty") {
+                    continue;
+                }
+                let text = "<p>" + p.type + "</p>";
+                if (p.value != 0) {
+                    text += "<p>Score: " + p.value + "</p>";
+                }
+                let day = Math.floor(i/nSlots);
+                let elemClass = false;
+                switch (p.type) {
+                    case "Lunch":
+                        elemClass = "ttLunch";
+                        break;
+                    case "Free Day":
+                        elemClass = "ttFreeDay";
+                        break;
+                }
+                addClass(day < 5, day >= 5, day % 5, i - day*nSlots, p.num, text, elemClass);
+            }
+        }
+
+        function addClass(odd, even, day, slot, num, html, elemClass) {
+            function helper(week, day, slot, num, html) {
+                let elem = form.getResultSlot(week, day, slot);
+                elem.append(html);
+                elem.attr("rowspan", num);
+
+                if (elemClass) {
+                    elem.addClass(elemClass);
+                }
+
+                for (let s = 1; s < num; s++) {
+                    form.getResultSlot(week, day, slot + s).addClass("hide");
+                }
+            }
+
+            if (odd) {
+                helper(0, day, slot, num, html);
+            }
+
+            if (even) {
+                helper(1, day, slot, num, html);
             }
         }
     },
@@ -141,24 +191,24 @@ const form = {
                 "<tr><td>" + slots[i] + "</td>" +
                 "<td><input type=\"number\" id=\"pen0_" + i + "\" /></td>" +
                 "<td><input type=\"number\" id=\"pen1_" + i + "\" /></td>" +
-                "<td><input type=\"number\" id=\"pen2_" + i + "\" /></td>" + 
+                "<td><input type=\"number\" id=\"pen2_" + i + "\" /></td>" +
                 "<td><input type=\"number\" id=\"pen3_" + i + "\" /></td>" +
                 "<td><input type=\"number\" id=\"pen4_" + i + "\" /></td></tr>");
-            
+
             for (let j = 0; j < 5; j++) {
                 restore("pen" + j + "_" + i);
             }
-            
+
             $("#resTimetable tbody").append(
                 "<tr><td>" + slots[i] + "</td>" +
                 "<td id=\"res00_" + i + "\"></td>" +
                 "<td id=\"res01_" + i + "\"></td>" +
-                "<td id=\"res02_" + i + "\"></td>" + 
+                "<td id=\"res02_" + i + "\"></td>" +
                 "<td id=\"res03_" + i + "\"></td>" +
                 "<td id=\"res04_" + i + "\"></td>" +
                 "<td id=\"res10_" + i + "\"></td>" +
                 "<td id=\"res11_" + i + "\"></td>" +
-                "<td id=\"res12_" + i + "\"></td>" + 
+                "<td id=\"res12_" + i + "\"></td>" +
                 "<td id=\"res13_" + i + "\"></td>" +
                 "<td id=\"res14_" + i + "\"></td></tr>");
         }
@@ -167,24 +217,24 @@ const form = {
         restore("optSem", "2");
         restore("optFreeDayBonus");
         restore("optLunchBonus");
-        
+
         $("#optYear").change(persist);
         $("#optSem").change(persist);
         $("#optFreeDayBonus").change(persist);
         $("#optLunchBonus").change(persist);
         $("#optSlotPenaltyTbl input").change(persist);
-        
+
         $('input[type="number"]').on('focus', function(e) {
             $(this).one('mouseup', function() {
                 $(this).select();
                 return false;
             }).select();
         });
-        
+
         function persist(e) {
             localStorage.setItem(e.target.id, $(e.target).val());
         }
-        
+
         function restore(id, def) {
             $("#" + id).val(localStorage.getItem(id) || def || "0");
         }
@@ -214,7 +264,7 @@ const modinfo = {
         return $.get(url).then(function(data) {
             return parseSched($(data));
         });
-        
+
         function parseSched(data) {
             let modCode = data.find("table:eq(0) td:eq(0)").text();
             let modTitle = data.find("table:eq(0) td:eq(1)").text();
@@ -224,7 +274,7 @@ const modinfo = {
                 return ret;
             }
             let groups = [];
-            
+
             let grpId;
             let classes = [];
             for (let row of data.find("table:eq(1) tr:gt(0)")) {
@@ -234,7 +284,7 @@ const modinfo = {
                 let tClsDay = cols.eq(3).text().trim();
                 let tClsTime = cols.eq(4).text().trim();
                 let tClsRem = cols.eq(6).text().trim();
-                
+
                 if (tGrpId != "") {
                     if (classes.length > 0) {
                         groups.push(new Group(grpId, modCode, classes));
@@ -242,19 +292,19 @@ const modinfo = {
                     }
                     grpId = parseInt(tGrpId, 10);
                 }
-                
+
                 let day = parseDay(tClsDay);
                 let oddEven = parseRem(tClsRem);
                 let startEnd = parseTime(tClsTime);
                 classes.push(new Class(day, oddEven.odd, oddEven.even, startEnd.first, startEnd.num, tClsType));
             }
-            
+
             if (classes.length > 0) {
                 groups.push(new Group(grpId, modCode, classes));
             }
-            
+
             return new Module(modCode, year, sem, modTitle, groups);
-            
+
             function parseDay(tDay) {
                 switch (tDay) {
                     case "MON": return 0;
@@ -265,7 +315,7 @@ const modinfo = {
                     default: throw "Invalid day " + tDay;
                 }
             }
-            
+
             function parseRem(tRem) {
                 if (tRem.startsWith("Wk1,3")) {
                     return {odd: true, even: false};
@@ -275,18 +325,18 @@ const modinfo = {
                     return {odd: true, even: true};
                 }
             }
-            
+
             function parseTime(tTime) {
                 let startHr = parseInt(tTime.substr(0, 2), 10);
                 let startMin = parseInt(tTime.substr(2, 2), 10);
                 let endHr = parseInt(tTime.substr(5, 2), 10);
                 let endMin = parseInt(tTime.substr(7, 2), 10);
-                
+
                 let startSlot = tts(startHr, startMin);
                 let numSlot = tts(endHr, endMin) - startSlot;
-                
+
                 return {first: startSlot, num: numSlot};
-                
+
                 function tts(h, m) {
                     return (h - 8)*2 - (m == 30 ? 0 : 1);
                 }
@@ -342,7 +392,9 @@ function clickAddMod() {
     let codes = form.getAddModCode().split(";");
     let yr = form.getYear();
     let sem = form.getSem();
-    for (let code of codes) {
+    for (let coder of codes) {
+        let code = coder; // closure cannot close over coder
+        // otherwise form.addModInfo gets the last value of coder
         code = code.trim();
         form.addModPlaceholder(code);
         modinfo.getModule(code, yr, sem).done(function(mod) {
@@ -409,24 +461,28 @@ function calc(mg) {
                     break;
                 }
             }
-            
+
             if (clash) {
                 continue;
             }
-            
+
             if (end) {
-                ret.push({score: score(t), groups: g});
+                let score2 = score(t);
+                ret.push({score: score2.score, groups: g, penalties: score2.penalties});
             } else {
                 permute(i+1, g.slice(0), t.clone());
             }
         }
     }
-    
+
     function score(t) {
         let r = 0;
+        let p = [];
         for (let i = 0; i < t.slots.length; i++) {
-            if (t.slots[i]) {
+            p.push([]);
+            if (t.slots[i] && pen.slots[i] != 0) {
                 r -= pen.slots[i];
+                p[i].push({type: "Slot Penalty", value: -pen.slots[i], num: 1});
             }
         }
         for (let d = 0; d < 10; d++) {
@@ -439,12 +495,31 @@ function calc(mg) {
             }
             if (!haveClass) {
                 r += pen.free;
+                p[d*nSlots].push({type: "Free Day", value: pen.free, num: nSlots});
+            }
+
+            let lunchFrom = 5;
+            let streak = 0;
+            for (let s = 5; s < 11; s++) {
+                if (t.slots[d*nSlots + s]) {
+                    if (streak >= 2) {
+                        break;
+                    }
+                    lunchFrom = s+1;
+                    streak = 0;
+                } else {
+                    streak++;
+                }
+            }
+
+            if (streak >= 2) {
+                r += pen.lunch;
+                p[d*nSlots + lunchFrom].push({type: "Lunch", value: pen.lunch, num: streak});
             }
         }
-        // TODO: Lunch bonus
-        return r;
+        return {score: r, penalties: p};
     }
-    
+
     function Timetable(slots) {
         this.slots = slots || new Array(nSlots * 10).fill(false);
         this.set = function(week, day, slot) {
