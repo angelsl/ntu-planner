@@ -34,11 +34,11 @@ fieldset + fieldset {
   margin-top: 1em;
 }
 
-label + input {
+#optForm label + input {
   margin-left: 6pt;
 }
 
-input + label {
+input#optYear + label {
   margin-left: 6pt;
 }
 
