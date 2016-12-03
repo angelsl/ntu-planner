@@ -678,9 +678,7 @@ function calc(mg) {
                         t.set(week, day, slot, ttEnt);
                     }
                     r += pen.free;
-                }
-                
-                {
+                } else {
                     let lunchStart = form.getLunchStart();
                     let lunchEnd = Math.max(form.getLunchEnd(), lunchStart);
                     let lunchSlots = Math.max(form.getLunchSlots(), 1);
