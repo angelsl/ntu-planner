@@ -66,6 +66,9 @@ const form = {
         return {
             free: this.getFreeDayBonus(),
             lunch: this.getLunchBonus(),
+            lunchStart: this.getLunchStart(),
+            lunchEnd: Math.max(this.getLunchEnd(), this.getLunchStart()),
+            lunchSlots: Math.max(this.getLunchSlots(), 1),
             slots: sp
         };
     },
@@ -608,13 +611,13 @@ function clickImport() {
 function calc(mg) {
     let pen = form.getConfig();
     let ret = [];
-    permute(0, [], new TimetableArray());
+    permute(0, [], new TimetableArray(), 0);
     ret.sort(function(a, b) {
         return b.score - a.score;
     });
     return ret;
 
-    function permute(curModIdx, curPermRef, curTimetableRef) {
+    function permute(curModIdx, curPermRef, curTimetableRef, cumClsScore) {
         if (curModIdx >= mg.length) {
             return;
         }
@@ -623,10 +626,13 @@ function calc(mg) {
             let curPerm = curPermRef.slice(0);
             curPerm.push(group);
             let curTimetable = curTimetableRef.clone();
+            let curCumClsScore = cumClsScore;
             let clash = false;
             for (let cls of group.classes) {
                 for (let wk of cls.weeks) {
                     let ttEnt = new TimetableEntry(cls, 0, "Class", wk, cls.day, cls.firstSlot, cls.numSlots);
+                    clsScore(ttEnt);
+                    curCumClsScore += ttEnt.pen;
                     for (let slot = cls.firstSlot; slot < cls.firstSlot + cls.numSlots; slot++) {
                         if (curTimetable.set(wk, cls.day, slot, ttEnt)) {
                             clash = true;
@@ -649,27 +655,27 @@ function calc(mg) {
             }
 
             if (end) {
-                let score2 = score(curTimetable);
-                ret.push({score: score2, groups: curPerm, timetable: curTimetable});
+                ret.push({score: bonuses(curTimetable) + curCumClsScore, groups: curPerm, timetable: curTimetable});
             } else {
-                permute(curModIdx+1, curPerm.slice(0), curTimetable.clone());
+                permute(curModIdx+1, curPerm.slice(0), curTimetable.clone(), curCumClsScore);
             }
         }
     }
 
-    function score(t) {
+    function clsScore(ttEnt) {
+        for (let slot = ttEnt.firstSlot; slot < ttEnt.firstSlot + ttEnt.numSlots; ++slot) {
+            ttEnt.pen -= pen.slots.get(ttEnt.week, ttEnt.day, slot);
+        }
+    }
+    
+    function bonuses(t) {
         let r = 0;
         for (let week = 0; week < nWeeks; week++) {
             for (let day = 0; day < nDays; day++) {
                 let haveClass = false;
                 for (let slot = 0; slot < nSlots; slot++) {
                     let e = t.get(week, day, slot);
-                    let p = pen.slots.get(week, day, slot);
                     haveClass = haveClass || !!e;
-                    if (e && p != 0) {
-                        r -= p;
-                        e.pen -= p;
-                    }
                 }
                 
                 if (!haveClass) {
@@ -679,15 +685,12 @@ function calc(mg) {
                     }
                     r += pen.free;
                 } else {
-                    let lunchStart = form.getLunchStart();
-                    let lunchEnd = Math.max(form.getLunchEnd(), lunchStart);
-                    let lunchSlots = Math.max(form.getLunchSlots(), 1);
-                    let lunchFrom = lunchStart;
+                    let lunchFrom = pen.lunchStart;
                     let streak = 0;
                     let streaks = [];
-                    for (let s = lunchStart; s <= lunchEnd; s++) {
+                    for (let s = pen.lunchStart; s <= pen.lunchEnd; s++) {
                         if (t.get(week, day, s)) {
-                            if (streak >= lunchSlots) {
+                            if (streak >= pen.lunchSlots) {
                                 streaks.push({start: lunchFrom, n: streak});
                             }
                             lunchFrom = s+1;
@@ -697,7 +700,7 @@ function calc(mg) {
                         }
                     }
 
-                    if (streak >= lunchSlots) {
+                    if (streak >= pen.lunchSlots) {
                         streaks.push({start: lunchFrom, n: streak});
                     }
 
