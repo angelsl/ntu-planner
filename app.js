@@ -49,15 +49,18 @@ const slots = (function() {
 })();
 
 const nSlots = slots.length;
+const nDays = 5;
+const nWeeks = 13;
 
 const form = {
     getConfig: function() {
-        let sp = new Array(nSlots * 10);
+        let sp = new TimetableArray(undefined, 0);
         for (let s = 0; s < nSlots; ++s) {
             for (let d = 0; d < 5; ++d) {
                 let tsp = this.getSlotPenalty(d, s);
-                sp[d*nSlots + s] = tsp;
-                sp[(d+5)*nSlots + s] = tsp;
+                for (let w = 0; w < nWeeks; ++w) {
+                    sp.set(w, d, s, tsp);
+                }
             }
         }
         return {
@@ -81,8 +84,8 @@ const form = {
     getSem: function() {
         return parseInt($("#optSem").val(), 10);
     },
-    getResultSlot: function(week, day, slot) {
-        return $("#res" + week + day + "_" + slot);
+    getResultSlot: function(day, slot) {
+        return $("#res" + day + "_" + slot);
     },
     getAddModCode: function() {
         return $("#modsCode").val();
@@ -95,6 +98,15 @@ const form = {
     },
     getLunchSlots: function() {
         return parseInt($("#optLunchSlots").val(), 10);
+    },
+    getSelectedWeek: function() {
+        return Math.min(13, Math.max(1, parseInt($("#resWeek").val(), 10))) - 1;
+    },
+    setSelectedWeek: function(week) {
+        $("#resWeek").val(Math.min(13, Math.max(1, week + 1)));
+    },
+    getSelectedPerm: function() {
+        return $("#resChoose").find("option:selected").data("perm");
     },
     addModPlaceholder: function(code) {
         if ($("#modli_" + code).length > 0) {
@@ -167,73 +179,54 @@ const form = {
     clearTimetable: function() {
         $("#resTimetable tbody td:not(:first-child)").removeClass().removeAttr("rowspan").empty();
     },
-    showPermutation: function(perm) {
+    showWeek: function(perm, week) {
         this.clearTimetable();
         if (!perm) {
             return;
         }
-        for (let g of perm.groups) {
-            for (let c of g.classes) {
-                let pen = 0;
-                for (let s = 0; s < c.numSlots; s++) {
-                    for (let p of perm.penalties[((c.even ? 5 : 0) + c.day)*nSlots + c.firstSlot + s]) { // TODO fixme ugly
-                        if (p.type == "Slot Penalty") {
-                            pen += p.value;
-                        }
+        
+        let entries = perm.timetable.collapseWeeks()[week];
+        for (let p of entries) {
+            switch (p.type) {
+                case "Class": {
+                    let text = "<p>" + p.cls.mod + " " + p.cls.group + "</p><p>" + p.cls.type + "</p>";
+                    if (p.pen != 0) {
+                        text += "<p class=\"score\">" + p.pen + "</p>";
                     }
+                    addClass(p.day, p.firstSlot, p.numSlots, text, "ttClass");
+                    break;
                 }
-                let text = "<p>" + g.mod + " " + g.id + "</p><p>" + c.type + "</p>";
-                if (pen != 0) {
-                    text += "<p class=\"score\">" + pen + "</p>";
+                default: {
+                    let text = "<p>" + p.type + "</p>";
+                    let elemClass = false;
+                    switch (p.type) {
+                        case "Lunch":
+                            elemClass = "ttLunch";
+                            break;
+                        case "Free Day":
+                            elemClass = "ttFreeDay";
+                            break;
+                    }
+                    if (p.pen != 0) {
+                        text += "<p class=\"score\">" + p.pen + "</p>";
+                    }
+                    addClass(p.day, p.firstSlot, p.numSlots, text, elemClass);
+                    break;
                 }
-                addClass(c.odd, c.even, c.day, c.firstSlot, c.numSlots, text, "ttClass");
-            }
-        }
-        for (let i = 0; i < perm.penalties.length; i++) {
-            let s = perm.penalties[i];
-            for (let p of s) {
-                if (p.type == "Slot Penalty") {
-                    continue;
-                }
-                let text = "<p>" + p.type + "</p>";
-                if (p.value != 0) {
-                    text += "<p class=\"score\">" + p.value + "</p>";
-                }
-                let day = Math.floor(i/nSlots);
-                let elemClass = false;
-                switch (p.type) {
-                    case "Lunch":
-                        elemClass = "ttLunch";
-                        break;
-                    case "Free Day":
-                        elemClass = "ttFreeDay";
-                        break;
-                }
-                addClass(day < 5, day >= 5, day % 5, i - day*nSlots, p.num, text, elemClass);
             }
         }
 
-        function addClass(odd, even, day, slot, num, html, elemClass) {
-            function helper(week, day, slot, num, html) {
-                let elem = form.getResultSlot(week, day, slot);
-                elem.append(html);
-                elem.attr("rowspan", num);
+        function addClass(day, slot, num, html, elemClass) {
+            let elem = form.getResultSlot(day, slot);
+            elem.append(html);
+            elem.attr("rowspan", num);
 
-                if (elemClass) {
-                    elem.addClass(elemClass);
-                }
-
-                for (let s = 1; s < num; s++) {
-                    form.getResultSlot(week, day, slot + s).addClass("hide");
-                }
+            if (elemClass) {
+                elem.addClass(elemClass);
             }
 
-            if (odd) {
-                helper(0, day, slot, num, html);
-            }
-
-            if (even) {
-                helper(1, day, slot, num, html);
+            for (let s = 1; s < num; s++) {
+                form.getResultSlot(day, slot + s).addClass("hide");
             }
         }
     },
@@ -253,16 +246,11 @@ const form = {
 
             $("#resTimetable tbody").append(
                 "<tr><td>" + slots[i] + "</td>" +
-                "<td id=\"res00_" + i + "\"></td>" +
-                "<td id=\"res01_" + i + "\"></td>" +
-                "<td id=\"res02_" + i + "\"></td>" +
-                "<td id=\"res03_" + i + "\"></td>" +
-                "<td id=\"res04_" + i + "\"></td>" +
-                "<td id=\"res10_" + i + "\"></td>" +
-                "<td id=\"res11_" + i + "\"></td>" +
-                "<td id=\"res12_" + i + "\"></td>" +
-                "<td id=\"res13_" + i + "\"></td>" +
-                "<td id=\"res14_" + i + "\"></td></tr>");
+                "<td id=\"res0_" + i + "\"></td>" +
+                "<td id=\"res1_" + i + "\"></td>" +
+                "<td id=\"res2_" + i + "\"></td>" +
+                "<td id=\"res3_" + i + "\"></td>" +
+                "<td id=\"res4_" + i + "\"></td></tr>");
 
             $("#optLunchStart, #optLunchEnd").append(
                 "<option value=\"" + i + "\">" + slots[i] + "</option>"
@@ -356,9 +344,9 @@ const modinfo = {
                 }
 
                 let day = parseDay(tClsDay);
-                let oddEven = parseRem(tClsRem);
+                let weeks = parseRem(tClsRem);
                 let startEnd = parseTime(tClsTime);
-                classes.push(new Class(day, oddEven.odd, oddEven.even, startEnd.first, startEnd.num, tClsType));
+                classes.push(new Class(day, weeks, startEnd.first, startEnd.num, tClsType, grpId, modCode));
             }
 
             if (classes.length > 0) {
@@ -379,12 +367,28 @@ const modinfo = {
             }
 
             function parseRem(tRem) {
-                if (tRem.startsWith("Wk1,3")) {
-                    return {odd: true, even: false};
-                } else if (tRem.startsWith("Wk2,4")) {
-                    return {odd: true, even: false};
+                if (tRem.trim() === "") {
+                    return [0,1,2,3,4,5,6,7,8,9,10,11,12];
+                } else if (tRem.startsWith("Wk")) {
+                    tRem = tRem.substr(2).split(',');
+                    let ret = [];
+                    for (let wkStr of tRem) {
+                        let range = wkStr.split('-');
+                        if (range.length == 1) {
+                            ret.push(parseInt(range[0], 10) - 1);
+                        } else if (range.length == 2) {
+                            let start = parseInt(range[0], 10) - 1;
+                            let end = parseInt(range[1], 10) - 1;
+                            
+                            for (let wk = start; wk <= end; ++wk) {
+                                ret.push(wk);
+                            }
+                        }
+                    }
+                    
+                    return ret;
                 } else {
-                    return {odd: true, even: true};
+                    throw "Unable to parse remark: " + tRem;
                 }
             }
 
@@ -424,13 +428,69 @@ function Group(id, mod, classes) {
     this.classes = classes;
 }
 
-function Class(day, odd, even, firstSlot, numSlots, type) {
+function Class(day, weeks, firstSlot, numSlots, type, group, mod) {
     this.day = day;
-    this.odd = odd;
-    this.even = even;
+    this.weeks = weeks;
     this.firstSlot = firstSlot;
     this.numSlots = numSlots;
     this.type = type;
+    this.group = group;
+    this.mod = mod;
+}
+
+function TimetableEntry(cls, pen, type, week, day, firstSlot, numSlots) {
+    this.cls = cls;
+    this.pen = pen;
+    this.type = type;
+    this.week = week;
+    this.day = day;
+    this.firstSlot = firstSlot;
+    this.numSlots = numSlots;
+}
+
+function TimetableArray(init, def) {
+    this.array = init || [];
+    if (!init) {
+        for (let i = 0; i < (nSlots * nDays * nWeeks); ++i) {
+            this.array.push(def === undefined ? false : def);
+        }
+    }
+    
+    this.get = function(week, day, slot) {
+        return this.array[idx(week, day, slot)];
+    }
+    
+    this.set = function(week, day, slot, to) {
+        let orig = this.get(week, day, slot);
+        this.array[idx(week, day, slot)] = to;
+        return orig;
+    }
+    
+    this.clone = function() {
+        return new TimetableArray(this.array.slice(0));
+    }
+    
+    this.collapseWeeks = function() {
+        let uniq = new Set(this.array);
+        uniq.delete(false);
+        let ret = [];
+        for (let week = 0; week < nWeeks; ++week) {
+            ret.push([]);
+        }
+        for (let ent of uniq) {
+            ret[ent.week].push(ent);
+        }
+        for (let week of ret) {
+            week.sort(function(a, b) {
+                return a.firstSlot - b.firstSlot;
+            });
+        }
+        return ret;
+    }
+    
+    function idx(week, day, slot) {
+        return (week*nDays + day)*nSlots + slot;
+    }
 }
 
 function init() {
@@ -451,6 +511,9 @@ function init() {
     $("#resChoose").change(showResult);
     $("#resPrev").click(clickResPrev);
     $("#resNext").click(clickResNext);
+    $("#resWeek").change(showWeek);
+    $("#resPrevWeek").click(clickResPrevWeek);
+    $("#resNextWeek").click(clickResNextWeek);
     $("#optExport").click(clickExport);
     $("#optImport").click(clickImport);
     form.init();
@@ -496,9 +559,15 @@ function clickCalc() {
     }
 }
 
-function showResult(e) {
-    let perm = $("#resChoose").find("option:selected").data("perm");
-    form.showPermutation(perm);
+function showResult() {
+    form.setSelectedWeek(0);
+    showWeek();
+}
+
+function showWeek() {
+    let week = form.getSelectedWeek();
+    $("#resTblWeek").text("Week " + (week+1));
+    form.showWeek(form.getSelectedPerm(), week);
 }
 
 function clickResPrev() {
@@ -511,6 +580,16 @@ function clickResNext() {
     let e = $("#resChoose");
     e.prop("selectedIndex", Math.min(e.children().length - 1, e.prop("selectedIndex") + 1));
     e.change();
+}
+
+function clickResNextWeek() {
+    form.setSelectedWeek(form.getSelectedWeek() + 1);
+    showWeek();
+}
+
+function clickResPrevWeek() {
+    form.setSelectedWeek(form.getSelectedWeek() - 1);
+    showWeek();
 }
 
 function clickExport() {
@@ -529,29 +608,37 @@ function clickImport() {
 function calc(mg) {
     let pen = form.getConfig();
     let ret = [];
-    permute(0, [], new Timetable());
+    permute(0, [], new TimetableArray());
     ret.sort(function(a, b) {
         return b.score - a.score;
     });
     return ret;
 
-    function permute(i, x, y) {
-        if (i >= mg.length) {
+    function permute(curModIdx, curPermRef, curTimetableRef) {
+        if (curModIdx >= mg.length) {
             return;
         }
-        let end = (i + 1) == mg.length;
-        for (let group of mg[i]) {
-            let g = x.slice(0);
-            g.push(group);
-            let t = y.clone();
+        let end = (curModIdx + 1) == mg.length;
+        for (let group of mg[curModIdx]) {
+            let curPerm = curPermRef.slice(0);
+            curPerm.push(group);
+            let curTimetable = curTimetableRef.clone();
             let clash = false;
             for (let cls of group.classes) {
-                for (let s = 0; s < cls.numSlots; s++) {
-                    if ((cls.odd && t.set(0, cls.day, s + cls.firstSlot)) || (cls.even && t.set(1, cls.day, s + cls.firstSlot))) {
-                        clash = true;
+                for (let wk of cls.weeks) {
+                    let ttEnt = new TimetableEntry(cls, 0, "Class", wk, cls.day, cls.firstSlot, cls.numSlots);
+                    for (let slot = cls.firstSlot; slot < cls.firstSlot + cls.numSlots; slot++) {
+                        if (curTimetable.set(wk, cls.day, slot, ttEnt)) {
+                            clash = true;
+                            break;
+                        }
+                    }
+                    
+                    if (clash) {
                         break;
                     }
                 }
+                
                 if (clash) {
                     break;
                 }
@@ -562,87 +649,77 @@ function calc(mg) {
             }
 
             if (end) {
-                let score2 = score(t);
-                ret.push({score: score2.score, groups: g, penalties: score2.penalties});
+                let score2 = score(curTimetable);
+                ret.push({score: score2, groups: curPerm, timetable: curTimetable});
             } else {
-                permute(i+1, g.slice(0), t.clone());
+                permute(curModIdx+1, curPerm.slice(0), curTimetable.clone());
             }
         }
     }
 
     function score(t) {
         let r = 0;
-        let p = [];
-        for (let i = 0; i < t.slots.length; i++) {
-            p.push([]);
-            if (t.slots[i] && pen.slots[i] != 0) {
-                r -= pen.slots[i];
-                p[i].push({type: "Slot Penalty", value: -pen.slots[i], num: 1});
-            }
-        }
-        for (let d = 0; d < 10; d++) {
-            let haveClass = false;
-            for (let s = 0; s < nSlots; s++) {
-                if (t.slots[d*nSlots + s]) {
-                    haveClass = true;
-                    break;
+        for (let week = 0; week < nWeeks; week++) {
+            for (let day = 0; day < nDays; day++) {
+                let haveClass = false;
+                for (let slot = 0; slot < nSlots; slot++) {
+                    let e = t.get(week, day, slot);
+                    let p = pen.slots.get(week, day, slot);
+                    haveClass = haveClass || !!e;
+                    if (e && p != 0) {
+                        r -= p;
+                        e.pen -= p;
+                    }
                 }
-            }
-            if (!haveClass) {
-                r += pen.free;
-                p[d*nSlots].push({type: "Free Day", value: pen.free, num: nSlots});
-                continue; // free day overrides lunch
-            }
+                
+                if (!haveClass) {
+                    let ttEnt = new TimetableEntry(false, pen.free, "Free Day", week, day, 0, nSlots);
+                    for (let slot = 0; slot < nSlots; slot++) {
+                        t.set(week, day, slot, ttEnt);
+                    }
+                    r += pen.free;
+                }
+                
+                {
+                    let lunchStart = form.getLunchStart();
+                    let lunchEnd = Math.max(form.getLunchEnd(), lunchStart);
+                    let lunchSlots = Math.max(form.getLunchSlots(), 1);
+                    let lunchFrom = lunchStart;
+                    let streak = 0;
+                    let streaks = [];
+                    for (let s = lunchStart; s <= lunchEnd; s++) {
+                        if (t.get(week, day, s)) {
+                            if (streak >= lunchSlots) {
+                                streaks.push({start: lunchFrom, n: streak});
+                            }
+                            lunchFrom = s+1;
+                            streak = 0;
+                        } else {
+                            streak++;
+                        }
+                    }
 
-            let lunchStart = form.getLunchStart();
-            let lunchEnd = Math.max(form.getLunchEnd(), lunchStart);
-            let lunchSlots = Math.max(form.getLunchSlots(), 1);
-            let lunchFrom = lunchStart;
-            let streak = 0;
-            let streaks = [];
-            for (let s = lunchStart; s <= lunchEnd; s++) {
-                if (t.slots[d*nSlots + s]) {
                     if (streak >= lunchSlots) {
                         streaks.push({start: lunchFrom, n: streak});
                     }
-                    lunchFrom = s+1;
-                    streak = 0;
-                } else {
-                    streak++;
-                }
-            }
 
-            if (streak >= lunchSlots) {
-                streaks.push({start: lunchFrom, n: streak});
-            }
-
-            if (streaks.length > 0) {
-                r += pen.lunch;
-                let lunch = {n: 0, start: 0};
-                for (let streak of streaks) {
-                    if (streak.n > lunch.n) {
-                        lunch = streak;
+                    if (streaks.length > 0) {
+                        r += pen.lunch;
+                        let lunch = {n: 0, start: 0};
+                        for (let streak of streaks) {
+                            if (streak.n > lunch.n) {
+                                lunch = streak;
+                            }
+                        }
+                        let ttEnt = new TimetableEntry(false, pen.lunch, "Lunch", week, day, lunch.start, lunch.n);
+                        for (let i = lunch.start; i < lunch.start + lunch.n; ++i) {
+                            t.set(week, day, i, ttEnt);
+                        }
                     }
                 }
-                p[d*nSlots + lunch.start].push({type: "Lunch", value: pen.lunch, num: lunch.n});
             }
         }
-        return {score: r, penalties: p};
-    }
-
-    function Timetable(slots) {
-        this.slots = slots || new Array(nSlots * 10).fill(false);
-        this.set = function(week, day, slot) {
-            let i = (week*5 + day)*nSlots + slot;
-            if (slots[i]) {
-                return true;
-            }
-            slots[i] = true;
-            return false;
-        };
-        this.clone = function() {
-            return new Timetable(this.slots.slice(0));
-        };
+        return r;
     }
 }
 
