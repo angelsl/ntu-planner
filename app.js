@@ -65,6 +65,7 @@ const form = {
         }
         return {
             free: this.getFreeDayBonus(),
+            lect: this.getLectDayBonus(),
             lunch: this.getLunchBonus(),
             lunchStart: this.getLunchStart(),
             lunchEnd: Math.max(this.getLunchEnd(), this.getLunchStart()),
@@ -77,6 +78,9 @@ const form = {
     },
     getFreeDayBonus: function() {
         return parseInt($("#optFreeDayBonus").val(), 10);
+    },
+    getLectDayBonus: function() {
+        return parseInt($("#optLectDayBonus").val(), 10);
     },
     getLunchBonus: function() {
         return parseInt($("#optLunchBonus").val(), 10);
@@ -207,6 +211,7 @@ const form = {
                             elemClass = "ttLunch";
                             break;
                         case "Free Day":
+                        case "Lecture-only Day":
                             elemClass = "ttFreeDay";
                             break;
                     }
@@ -263,7 +268,7 @@ const form = {
         $("#optSlotPenaltyTbl input").change(persist);
 
         for (let id of
-            ["optYear", "optSem", "optFreeDayBonus",
+            ["optYear", "optSem", "optFreeDayBonus", "optLectDayBonus",
             "optLunchBonus", "optLunchStart",
             "optLunchEnd", "optLunchSlots"]
         ) {
@@ -500,7 +505,7 @@ function init() {
     const CONFIG_VER = 7;
     let ver = parseInt(cfg.getItem("initialised"), 10);
     if (!cfg.getItem("initialised") || isNaN(ver) || ver < CONFIG_VER) {
-        let defaults = {"pen4_18":"20","pen4_13":"20","pen3_27":"20","pen0_3":"1","pen4_29":"20","pen2_20":"20","pen4_9":"20","pen0_26":"20","pen3_23":"20","pen1_2":"1","pen2_2":"1","pen4_12":"20","pen1_24":"20","pen3_20":"20","pen3_1":"20","pen4_26":"20","pen2_28":"20","pen2_21":"20","pen0_25":"20","pen1_1":"20","pen4_15":"20","pen1_25":"20","pen3_28":"20","pen4_27":"20","pen2_29":"20","pen2_22":"20","pen1_26":"20","pen0_24":"20","pen1_0":"20","pen4_14":"20","pen3_0":"20","pen3_29":"20","pen3_22":"20","pen4_24":"20","pen2_0":"20","pen3_21":"20","pen2_23":"20","pen4_17":"20","pen1_27":"20","pen4_25":"20","pen0_23":"20","pen0_22":"20","pen4_16":"20","pen1_20":"20","pen0_28":"20","pen2_25":"20","pen4_22":"20","pen2_24":"20","pen4_21":"20","pen4_2":"0","pen1_28":"20","pen1_21":"20","pen3_24":"20","pen0_0":"20","pen4_23":"20","pen3_3":"1","pen0_21":"20","pen2_1":"20","pen4_11":"20","pen1_29":"20","pen1_22":"20","pen3_25":"20","pen0_1":"20","pen4_20":"20","pen2_26":"20","pen0_29":"20","pen0_20":"20","pen4_0":"20","pen4_19":"20","pen4_10":"20","pen0_27":"20","pen1_23":"20","pen3_26":"20","pen0_2":"1","pen4_28":"20","pen3_2":"1","pen2_27":"20","pen4_8":"20","pen4_1":"20","pen1_3":"1","pen2_3":"1","optYear":"2017","optSem":"1","optLunchSlots":"1","optLunchStart":"5","optLunchEnd":"11","optFreeDayBonus":"500","optLunchBonus":"20"};
+        let defaults = {"pen4_18":"20","pen4_13":"20","pen3_27":"20","pen0_3":"1","pen4_29":"20","pen2_20":"20","pen4_9":"20","pen0_26":"20","pen3_23":"20","pen1_2":"1","pen2_2":"1","pen4_12":"20","pen1_24":"20","pen3_20":"20","pen3_1":"20","pen4_26":"20","pen2_28":"20","pen2_21":"20","pen0_25":"20","pen1_1":"20","pen4_15":"20","pen1_25":"20","pen3_28":"20","pen4_27":"20","pen2_29":"20","pen2_22":"20","pen1_26":"20","pen0_24":"20","pen1_0":"20","pen4_14":"20","pen3_0":"20","pen3_29":"20","pen3_22":"20","pen4_24":"20","pen2_0":"20","pen3_21":"20","pen2_23":"20","pen4_17":"20","pen1_27":"20","pen4_25":"20","pen0_23":"20","pen0_22":"20","pen4_16":"20","pen1_20":"20","pen0_28":"20","pen2_25":"20","pen4_22":"20","pen2_24":"20","pen4_21":"20","pen4_2":"0","pen1_28":"20","pen1_21":"20","pen3_24":"20","pen0_0":"20","pen4_23":"20","pen3_3":"1","pen0_21":"20","pen2_1":"20","pen4_11":"20","pen1_29":"20","pen1_22":"20","pen3_25":"20","pen0_1":"20","pen4_20":"20","pen2_26":"20","pen0_29":"20","pen0_20":"20","pen4_0":"20","pen4_19":"20","pen4_10":"20","pen0_27":"20","pen1_23":"20","pen3_26":"20","pen0_2":"1","pen4_28":"20","pen3_2":"1","pen2_27":"20","pen4_8":"20","pen4_1":"20","pen1_3":"1","pen2_3":"1","optYear":"2017","optSem":"1","optLunchSlots":"1","optLunchStart":"5","optLunchEnd":"11","optFreeDayBonus":"500","optLunchBonus":"20","optLectDayBonus":"500"};
         for (let k in defaults) {
             if (cfg.getItem(k) === null) {
                 cfg.setItem(k, defaults[k]);
@@ -673,9 +678,13 @@ function calc(mg) {
         for (let week = 0; week < nWeeks; week++) {
             for (let day = 0; day < nDays; day++) {
                 let haveClass = false;
+                let lectOnly = true;
                 for (let slot = 0; slot < nSlots; slot++) {
                     let e = t.get(week, day, slot);
-                    haveClass = haveClass || !!e;
+                    if (!!e) {
+                        haveClass = true;
+                        lectOnly = lectOnly && e.cls.type == "LEC/STUDIO";
+                    }
                 }
                 
                 if (!haveClass) {
@@ -685,6 +694,17 @@ function calc(mg) {
                     }
                     r += pen.free;
                 } else {
+                    if (lectOnly && pen.lect != 0) {
+                        for (let slot = 0; slot < nSlots; slot++) {
+                            let e = t.get(week, day, slot);
+                            if (!e) {
+                                let ttEnt = new TimetableEntry(false, pen.lect, "Lecture-only Day", week, day, slot, 1);
+                                t.set(week, day, slot, ttEnt);
+                                break;
+                            }
+                        }
+                        r += pen.lect;
+                    }
                     let lunchFrom = pen.lunchStart;
                     let streak = 0;
                     let streaks = [];
