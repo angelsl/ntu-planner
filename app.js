@@ -312,10 +312,10 @@ const modinfo = {
         }
     },
     loadFromWish: function(code, year, sem) {
-        let url = "https://crossorigin.me/https://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1?staff_access=false&acadsem=" + year + ";" + sem + "&r_subj_code=" + code +"&boption=Search&r_search_type=F";
-        return $.get(url).then(function(data) {
+        let url = "http://cors-proxy.htmldriven.com/?url=" + encodeURIComponent("https://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1?staff_access=false&acadsem=" + year + ";" + sem + "&r_subj_code=" + code +"&boption=Search&r_search_type=F");
+        return $.get(url, undefined, undefined, "json").then(function(data) {
             try {
-                return parseSched($(data));
+                return parseSched($(data.body));
             } catch (e) {
                 let ret = $.Deferred();
                 ret.reject("", e.toString(), "");
